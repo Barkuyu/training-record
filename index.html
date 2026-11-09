@@ -344,23 +344,23 @@ h1{font-size:clamp(22px,6.4vw,29px)}
 
   /* ---------- day modal ---------- */
   function openDay(s){
-    var past=isPast(s), M;
+    var past=isPast(s), future=s>todayStr(), locked=past||future, M;
     function body(){
       var list=events[s]||[], h='';
       h+='<div class="legend"><span><i></i>未標記</span><span><i style="background:#2ecc71;border-color:#1ea455"></i>已完成</span><span><i style="background:#f6c62b;border-color:#c99b0a"></i>未完全完成</span><span><i style="border-color:#e5252a;color:#e5252a">✕</i>逾期未完成</span></div>';
       if(!list.length) h+='<div class="sub" style="padding:18px 0;text-align:center">這天還沒有運動計劃<br>可用「快速新增」建立</div>';
       list.forEach(function(ev){
         var st=disp(s,ev);
-        h+='<div class="ev" data-id="'+ev.id+'"><button class="box s'+st+(past?' locked':'')+'" data-box="'+ev.id+'" '+(past?'disabled':'')+'>'+(st===3?'❌':'')+'</button><div class="evmain"><div class="evname">'+esc(ev.name)+'</div>';
+        h+='<div class="ev" data-id="'+ev.id+'"><button class="box s'+st+(locked?' locked':'')+'" data-box="'+ev.id+'" '+(locked?'disabled':'')+'>'+(st===3?'❌':'')+'</button><div class="evmain"><div class="evname">'+esc(ev.name)+'</div>';
         if(st===2){
-          if(past) h+='<div class="notetxt">實際完成：'+esc(ev.note||'（未填寫）')+'</div>';
+          if(locked) h+='<div class="notetxt">實際完成：'+esc(ev.note||'（未填寫）')+'</div>';
           else h+='<input class="note" data-note="'+ev.id+'" type="text" placeholder="實際完成內容為何？" value="'+esc(ev.note||'')+'">';
         }
         h+='</div></div>';
       });
       return h;
     }
-    var tagHtml=past?'<span class="tag lock">已過・唯讀</span>':(s===todayStr()?'<span class="tag">今天</span>':'');
+    var tagHtml=past?'<span class="tag lock">已過・唯讀</span>':future?'<span class="tag lock">未到・僅供查看</span>':(s===todayStr()?'<span class="tag">今天</span>':'');
     M=showModal('<div class="mh"><h2>'+nice(s)+tagHtml+'</h2></div><div class="mb"><div class="sub" style="margin-bottom:4px">當日運動計劃</div><div id="dl"></div></div><div class="mf"><button class="btn light sm" data-close>關閉</button></div>',{onClose:renderCal});
     var dl=M.el.querySelector('#dl');
     function paint(focusId){
@@ -369,7 +369,7 @@ h1{font-size:clamp(22px,6.4vw,29px)}
     }
     paint();
     dl.addEventListener('click',function(e){
-      var b=e.target.closest('[data-box]'); if(!b||past) return;
+      var b=e.target.closest('[data-box]'); if(!b||locked) return;
       var id=b.getAttribute('data-box'), ev=(events[s]||[]).filter(function(x){return x.id===id;})[0]; if(!ev) return;
       ev.status=(ev.status+1)%3;
       if(ev.status!==2) ev.note= ev.status===0?'':ev.note;
